@@ -9,7 +9,6 @@ REQUIRED_NOT_SET = (False, "One of ({}) must be set.")
 REQUIRED_MUTEX = (False, "Only one of ({}) can be set.")
 REQUIRED_VALID = (True, "")
 
-
 DOCUMENTATION = r'''
 module: a10_file_log_backup
 description:
@@ -106,7 +105,17 @@ ANSIBLE_METADATA = {
 }
 
 # Hacky way of having access to object properties for evaluation
-AVAILABLE_PROPERTIES = ["all", "date", "day", "expedite", "file_handle", "month", "period", "stats_data", "week", ]
+AVAILABLE_PROPERTIES = [
+    "all",
+    "date",
+    "day",
+    "expedite",
+    "file_handle",
+    "month",
+    "period",
+    "stats_data",
+    "week",
+]
 
 from ansible_collections.a10.acos_axapi.plugins.module_utils import \
     errors as a10_ex
@@ -121,25 +130,58 @@ def get_default_argspec():
         ansible_host=dict(type='str', required=True),
         ansible_username=dict(type='str', required=True),
         ansible_password=dict(type='str', required=True, no_log=True),
-        state=dict(type='str', default="present", choices=['noop', 'present', 'absent']),
+        state=dict(type='str',
+                   default="present",
+                   choices=['noop', 'present', 'absent']),
         ansible_port=dict(type='int', choices=[80, 443], required=True),
-        a10_partition=dict(type='dict', name=dict(type='str',), shared=dict(type='str',), required=False, ),
-        a10_device_context_id=dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8], required=False, ),
+        a10_partition=dict(
+            type='dict',
+            name=dict(type='str', ),
+            shared=dict(type='str', ),
+            required=False,
+        ),
+        a10_device_context_id=dict(
+            type='int',
+            choices=[1, 2, 3, 4, 5, 6, 7, 8],
+            required=False,
+        ),
         get_type=dict(type='str', choices=["single", "list", "oper", "stats"]),
     )
 
 
 def get_argspec():
     rv = get_default_argspec()
-    rv.update({'file_content': {'type': 'str', },'week': {'type': 'bool', },
-        'all': {'type': 'bool', },
-        'period': {'type': 'bool', },
-        'month': {'type': 'bool', },
-        'stats_data': {'type': 'bool', },
-        'expedite': {'type': 'bool', },
-        'date': {'type': 'int', },
-        'day': {'type': 'bool', },
-        'file_handle': {'type': 'str', }
+    rv.update({
+        'file_content': {
+            'type': 'str',
+        },
+        'week': {
+            'type': 'bool',
+        },
+        'all': {
+            'type': 'bool',
+        },
+        'period': {
+            'type': 'bool',
+        },
+        'month': {
+            'type': 'bool',
+        },
+        'stats_data': {
+            'type': 'bool',
+        },
+        'expedite': {
+            'type': 'bool',
+        },
+        'date': {
+            'type': 'int',
+        },
+        'day': {
+            'type': 'bool',
+        },
+        'file_handle': {
+            'type': 'str',
+        }
     })
     return rv
 
@@ -197,9 +239,7 @@ def _build_dict_from_param(param):
 
 
 def build_envelope(title, data):
-    return {
-        title: data
-    }
+    return {title: data}
 
 
 def new_url(module):
@@ -215,7 +255,9 @@ def new_url(module):
 def validate(params):
     # Ensure that params contains all the keys.
     requires_one_of = sorted([])
-    present_keys = sorted([x for x in requires_one_of if x in params and params.get(x) is not None])
+    present_keys = sorted([
+        x for x in requires_one_of if x in params and params.get(x) is not None
+    ])
 
     errors = []
     marg = []
@@ -283,7 +325,11 @@ def report_changes(module, result, existing_config, payload):
 def create(module, result, payload):
     try:
         if module.params["action"] == "import":
-            post_result = module.client.post(new_url(module), payload, file_content=module.params["file_content"], file_name=module.params["file"])
+            post_result = module.client.post(
+                new_url(module),
+                payload,
+                file_content=module.params["file_content"],
+                file_name=module.params["file"])
         else:
             post_result = module.client.post(new_url(module), payload)
         if post_result:
@@ -354,12 +400,7 @@ def absent(module, result, existing_config):
 def run_command(module):
     run_errors = []
 
-    result = dict(
-        changed=False,
-        original_message="",
-        message="",
-        result={}
-    )
+    result = dict(changed=False, original_message="", message="", result={})
 
     state = module.params["state"]
     ansible_host = module.params["ansible_host"]
@@ -386,7 +427,8 @@ def run_command(module):
         result["messages"] = "Validation failure: " + str(run_errors)
         module.fail_json(msg=err_msg, **result)
 
-    module.client = client_factory(ansible_host, ansible_port, protocol, ansible_username, ansible_password)
+    module.client = client_factory(ansible_host, ansible_port, protocol,
+                                   ansible_username, ansible_password)
 
     if a10_partition:
         module.client.activate_partition(a10_partition)
@@ -412,7 +454,8 @@ def run_command(module):
 
 
 def main():
-    module = AnsibleModule(argument_spec=get_argspec(), supports_check_mode=True)
+    module = AnsibleModule(argument_spec=get_argspec(),
+                           supports_check_mode=True)
     result = run_command(module)
     module.exit_json(**result)
 
